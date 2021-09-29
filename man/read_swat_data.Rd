@@ -37,6 +37,6 @@ Data is read from the \code{filename} in the \code{path} directory. The
 \code{vars} parameter specifies the columns to read and the \code{swat_units}
 specifies the units to select.
 
-If \code{vars} is set to \code{"names}, the function returns a vector of
+If \code{vars} is set to \code{"names"}, the function returns a vector of
 variable names contained in the file.
 }

@@ -34,19 +34,21 @@ run_swat <- function(scenario_path) {
 #' @param vars Variables to read from the file. See details
 #' @param swat_units Vector of spatial units to select from the "unit" column
 #' @param date_range Date vector (length 2) specifying the date range to read
+#' @export
+#' @importFrom utils read.table
+#' @importFrom data.table `:=`
 #' @details
 #' This function is used to read SWAT+ output data into a data.frame format.
 #' Data is read from the \code{filename} in the \code{path} directory. The
 #' \code{vars} parameter specifies the columns to read and the \code{swat_units}
 #' specifies the units to select.
 #'
-#' If \code{vars} is set to \code{"names}, the function returns a vector of
+#' If \code{vars} is set to \code{"names"}, the function returns a vector of
 #' variable names contained in the file.
 #' @return
 #' The function returns a \code{data.table} object, which is useful for large
 #' datasets. If desired, it can easily be converted to a \code{data.frame} using
 #' \code{as.data.frame}.
-#' @export
 read_swat_data <- function(filename, path, vars = "all", swat_units = "all", date_range = "all") {
   # path <- "/Documents and Settings/gopenny/Documents/SWAT models/gandak/gandak/Scenarios/Default/TxtInOut/"
   # filename <- "lsunit_wb_day"
@@ -54,6 +56,9 @@ read_swat_data <- function(filename, path, vars = "all", swat_units = "all", dat
   # vars <- c("flo_out")
   # units <- 87
   # date_range <- c("1980-01-01", "1984-12-31")
+  yr <- mon <- day <- ..vars_date <- unit <- NULL
+
+
   if (!grepl("\\.txt$",filename)) {
     filename <- paste0(filename,".txt")
   }

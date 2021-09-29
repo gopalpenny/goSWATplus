@@ -28,8 +28,8 @@
 #' @importFrom readr write_lines
 #' @examples
 #' calibration_df <-
-#'   add_cal_parm(param = "cn2", change_type = "pctchng", val = 10) %>%
-#'   add_cal_parm(param = "cn3", change_type = "pctchng", val = 20)
+#'   add_cal_parm(param = "cn2", change_type = "pctchg", val = 10) %>%
+#'   add_cal_parm(param = "cn3", change_type = "pctchg", val = 20)
 #' write_calibration_cal(tempdir(), calibration_df)
 #' readLines(file.path(tempdir(), "calibration.cal"))
 write_calibration_cal <- function(swatTxtInOut_path, calibration_df) {
@@ -40,18 +40,16 @@ write_calibration_cal <- function(swatTxtInOut_path, calibration_df) {
   }
 
   calibration_cal_path <- file.path(swatTxtInOut_path, "calibration.cal")
-  calibration_df$VAL <- calibration_df$VAL %>%
-    sprintf("%.15s", .)
+  calibration_df$VAL <- sprintf("%.15s", calibration_df$VAL)
 
   col_format <- c("%-8s", "%8s", "%16s", rep("%8s", 8))
 
-  col_names <- names(calibration_df) %>%
-    sprintf(col_format, .) %>%
-    paste(., collapse = "")
+  col_names <- sprintf(col_format, names(calibration_df)) %>%
+    paste(collapse = "")
 
-  calibration_write <- purrr::map2_df(calibration_df, col_format, ~sprintf(.y, .x)) %>%
-    apply(., 1, paste, collapse = "") %>%
-    c("Number of parameters:", sprintf("%2d",length(.)), col_names, .)
+  calibration_text <- purrr::map2_df(calibration_df, col_format, ~sprintf(.y, .x)) %>%
+    apply(1, paste, collapse = "")
+  calibration_write <- c("Number of parameters:", sprintf("%2d",length(calibration_text)), col_names, calibration_text)
 
   write_lines(calibration_write, calibration_cal_path)
   # print(calibration_write)
@@ -72,9 +70,9 @@ write_calibration_cal <- function(swatTxtInOut_path, calibration_df) {
 #' to write the calibration file calibration.cal using write_calibration_cal().
 #' The function is pipe-friendly for adding multiple parameters.
 #' @examples
-#' calibration_df <- add_cal_parm(param = "cn2", change_type = "pctchng", val = 10)
+#' calibration_df <- add_cal_parm(param = "cn2", change_type = "pctchg", val = 10)
 #' calibration_df2 <- calibration_df %>%
-#'   add_cal_parm(param = "cn3", change_type = "pctchng", val = 20)
+#'   add_cal_parm(param = "cn3", change_type = "pctchg", val = 20)
 add_cal_parm <- function(calibration_df = NULL, param, change_type, val,
                          conds = NULL, layers = NULL, dates = NULL) {
   if (!is.null(dates)) {

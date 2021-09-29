@@ -36,8 +36,8 @@ The input parameter \code{calibration_df} should contain columns created by
 }
 \examples{
 calibration_df <-
-  add_cal_parm(param = "cn2", change_type = "pctchng", val = 10) \%>\%
-  add_cal_parm(param = "cn3", change_type = "pctchng", val = 20)
+  add_cal_parm(param = "cn2", change_type = "pctchg", val = 10) \%>\%
+  add_cal_parm(param = "cn3", change_type = "pctchg", val = 20)
 write_calibration_cal(tempdir(), calibration_df)
 readLines(file.path(tempdir(), "calibration.cal"))
 }

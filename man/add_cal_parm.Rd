@@ -38,7 +38,7 @@ to write the calibration file calibration.cal using write_calibration_cal().
 The function is pipe-friendly for adding multiple parameters.
 }
 \examples{
-calibration_df <- add_cal_parm(param = "cn2", change_type = "pctchng", val = 10)
+calibration_df <- add_cal_parm(param = "cn2", change_type = "pctchg", val = 10)
 calibration_df2 <- calibration_df \%>\%
-  add_cal_parm(param = "cn3", change_type = "pctchng", val = 20)
+  add_cal_parm(param = "cn3", change_type = "pctchg", val = 20)
 }
