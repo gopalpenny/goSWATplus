@@ -13,7 +13,7 @@
 #' \code{add_cal_parm}, i.e.:
 #' \itemize{
 #' \item NAME
-#' \item CHG_TYPE
+#' \item CHG_TYPE - one of "absval", "abschg", "pctchg"
 #' \item VAL
 #' \item CONDS
 #' \item LYR1
@@ -33,6 +33,12 @@
 #' write_calibration_cal(tempdir(), calibration_df)
 #' readLines(file.path(tempdir(), "calibration.cal"))
 write_calibration_cal <- function(swatTxtInOut_path, calibration_df) {
+
+  permittable_change_types <- c("absval", "abschg", "pctchg")
+  if(!all(calibration_df$CHG_TYPE %in% permittable_change_types)) {
+    stop('CHG_TYPE must be one of "absval", "abschg", or "pctchg"')
+  }
+
   calibration_cal_path <- file.path(swatTxtInOut_path, "calibration.cal")
   calibration_df$VAL <- calibration_df$VAL %>%
     sprintf("%.15s", .)
@@ -82,6 +88,12 @@ add_cal_parm <- function(calibration_df = NULL, param, change_type, val,
   } else {
     lyr <- c(0, 0)
   }
+
+  permittable_change_types <- c("absval", "abschg", "pctchg")
+  if(!(change_type %in% permittable_change_types)) {
+    stop('change_type must be one of "absval", "abschg", or "pctchg"')
+  }
+
   new_row <- tibble::tibble(NAME = param,
                     CHG_TYPE = change_type,
                     VAL = val,
