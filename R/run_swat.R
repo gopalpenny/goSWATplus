@@ -3,7 +3,11 @@
 # swat_functions.R
 
 
-#
+#' Run SWAT executable file
+#'
+#' @param scenario_path Path containing TxtInOut directory with SWAT executable
+#' @details Runs the first executable file in \code{scenario_path}
+#' @export
 run_swat <- function(scenario_path) {
   # print.prt - write to csv?
   # time.sim - start and end dates
@@ -11,56 +15,37 @@ run_swat <- function(scenario_path) {
   current_wd <- getwd()
   setwd(scenario_path)
   swat_exe <- list.files(scenario_path, pattern = "\\.exe")
-  system(swat_exe)
+  if (length(swat_exe) == 0) {
+    stop("No executable files found in the SWAT scenario_path")
+  } else if (length(swat_exe) > 1) {
+    warning("Multiple executable files found in the SWAT scenario_path. Using",swat_exe[1],"\n")
+  }
+
+  cat("Running", swat_exe[1], "in", scenario_path,"...")
+  system(swat_exe[1])
+  cat("Done.\n")
   setwd(current_wd)
 }
 
-# absval
-# abschg
-# pctchg
-
-write_calibration <- function(cal_params_df) {
-
-}
-
-
-
-#' Update the calibration file structure with the parameter set of the current
-#' simulation run_i
+#' Read SWAT+ output data
 #'
-#' @param thread_path Path to the current parallel thread 'thread_i'
-#' @param parameter Model parameters as named vector or tibble
-#' @param calibration Template table structure of the calibration file
-#' @param i_run Index of the i_th simulation run
+#' @param filename Name of SWAT+ output file
+#' @param path Path to SWAT+ output files
+#' @param vars Variables to read from the file. See details
+#' @param swat_units Vector of spatial units to select from the "unit" column
+#' @param date_range Date vector (length 2) specifying the date range to read
+#' @details
+#' This function is used to read SWAT+ output data into a data.frame format.
+#' Data is read from the \code{filename} in the \code{path} directory. The
+#' \code{vars} parameter specifies the columns to read and the \code{swat_units}
+#' specifies the units to select.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom purrr map2_df map_dbl
-#' @importFrom readr write_lines
-#'
-#' @keywords internal
-#'
-# write_calibration <- function(thread_path, parameter, calibration, run_index,
-#                               i_run) {
-#   calibration$VAL <- parameter$values[run_index[i_run],] %>%
-#     map_dbl(., ~.x) %>%
-#     set_names(., parameter$definition$parameter) %>%
-#     .[calibration$NAME] %>%
-#     sprintf("%.15s", .)
-#
-#   col_format <- c("%-8s", "%8s", "%16s", rep("%8s", 8))
-#
-#   col_names <- names(calibration) %>%
-#     sprintf(col_format, .) %>%
-#     paste(., collapse = "")
-#
-#   calibration <- map2_df(calibration, col_format, ~sprintf(.y, .x)) %>%
-#     apply(., 1, paste, collapse = "") %>%
-#     c("Number of parameters:", sprintf("%2d",length(.)), col_names, .)
-#
-#   write_lines(calibration, thread_path%//%"calibration.cal")
-# }
-
-#
+#' If \code{vars} is set to \code{"names}, the function returns a vector of
+#' variable names contained in the file.
+#' @return
+#' The function returns a \code{data.table} object, which is useful for large
+#' datasets. If desired, it can easily be converted to a \code{data.frame} using
+#' \code{as.data.frame}.
 read_swat_data <- function(filename, path, vars = "all", swat_units = "all", date_range = "all") {
   # path <- "/Documents and Settings/gopenny/Documents/SWAT models/gandak/gandak/Scenarios/Default/TxtInOut/"
   # filename <- "lsunit_wb_day"
