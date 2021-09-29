@@ -1,6 +1,39 @@
 # prep_calibration.R
 
+#' Write calibration file
+#'
+#' @param swatTxtInOut_path Path to SWAT scenario directory
+#' @param calibration_df data.frame with calibration data (see details)
+#' @export
+#' @details
+#' This function writes the calibration file calibration.cal in the directory
+#' \code{swatTxtInOut_path}.
+#'
+#' The input parameter \code{calibration_df} should contain columns created by
+#' \code{add_cal_parm}, i.e.:
+#' \itemize{
+#' \item NAME
+#' \item CHG_TYPE
+#' \item VAL
+#' \item CONDS
+#' \item LYR1
+#' \item LYR2
+#' \item YEAR1
+#' \item YEAR2
+#' \item DAY1
+#' \item DAY2
+#' \item OBJ_TOT
+#' }
+#' @importFrom purrr map2_df
+#' @importFrom readr write_lines
+#' @examples
+#' calibration_df <-
+#'   add_cal_parm(param = "cn2", change_type = "pctchng", val = 10) %>%
+#'   add_cal_parm(param = "cn3", change_type = "pctchng", val = 20)
+#' write_calibration_cal(tempdir(), calibration_df)
+#' readLines(file.path(tempdir(), "calibration.cal"))
 write_calibration_cal <- function(swatTxtInOut_path, calibration_df) {
+  calibration_cal_path <- file.path(swatTxtInOut_path, "calibration.cal")
   calibration_df$VAL <- calibration_df$VAL %>%
     sprintf("%.15s", .)
 
@@ -10,12 +43,12 @@ write_calibration_cal <- function(swatTxtInOut_path, calibration_df) {
     sprintf(col_format, .) %>%
     paste(., collapse = "")
 
-  calibration_write <- map2_df(calibration_df, col_format, ~sprintf(.y, .x)) %>%
+  calibration_write <- purrr::map2_df(calibration_df, col_format, ~sprintf(.y, .x)) %>%
     apply(., 1, paste, collapse = "") %>%
     c("Number of parameters:", sprintf("%2d",length(.)), col_names, .)
 
-  # write_lines(calibration_write, file.path(swatTxtInOut_path,"calibration.cal"))
-  print(calibration_write)
+  write_lines(calibration_write, calibration_cal_path)
+  # print(calibration_write)
 }
 
 #' Add calibration parameter
@@ -49,7 +82,7 @@ add_cal_parm <- function(calibration_df = NULL, param, change_type, val,
   } else {
     lyr <- c(0, 0)
   }
-  new_row <- tibble(NAME = param,
+  new_row <- tibble::tibble(NAME = param,
                     CHG_TYPE = change_type,
                     VAL = val,
                     CONDS = 0,
@@ -61,9 +94,8 @@ add_cal_parm <- function(calibration_df = NULL, param, change_type, val,
     new_calibration_df <- new_row
   } else {
     new_calibration_df <- calibration_df %>%
-      bind_rows(new_row)
+      dplyr::bind_rows(new_row)
   }
   return(new_calibration_df)
 }
 
-# write_calibration_cal("hi", calibration_df2)
