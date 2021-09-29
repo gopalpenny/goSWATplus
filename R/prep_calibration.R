@@ -66,6 +66,7 @@ write_calibration_cal <- function(swatTxtInOut_path, calibration_df) {
 #' @param conds Not implemented
 #' @param layers Numeric vector length two, first to last soil layer
 #' @param dates Date vector of length two, first to last date for param to apply
+#' @export
 #' @details
 #' This function is used to build a dataframe for calibration, specifically
 #' to write the calibration file calibration.cal using write_calibration_cal().

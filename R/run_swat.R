@@ -46,6 +46,7 @@ run_swat <- function(scenario_path) {
 #' The function returns a \code{data.table} object, which is useful for large
 #' datasets. If desired, it can easily be converted to a \code{data.frame} using
 #' \code{as.data.frame}.
+#' @export
 read_swat_data <- function(filename, path, vars = "all", swat_units = "all", date_range = "all") {
   # path <- "/Documents and Settings/gopenny/Documents/SWAT models/gandak/gandak/Scenarios/Default/TxtInOut/"
   # filename <- "lsunit_wb_day"

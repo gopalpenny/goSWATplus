@@ -4,6 +4,7 @@
 #'
 #' @param x_obs Vector of observations
 #' @param x_sim Vector of simulated data
+#' @export
 #' @return
 #' Returns the NSE between \code{x_obs} and \code{x_sim}
 #' @examples
