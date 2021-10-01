@@ -49,6 +49,7 @@ get_NSE <- function(x_obs, x_sim) {
 #' }
 #' func_objective(params_df)
 #'
+#' set.seed(100)
 #' dds_output <- calibrate_DDS(params_df, func_objective, m = 100)
 #' View(dds_output)
 calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE) {
@@ -64,7 +65,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
 
   dds_outcomes <- params_df %>% dplyr::select(c("param_names", "values")) %>%
     tidyr::pivot_wider(names_from = "param_names", values_from = "values") %>%
-    dplyr::bind_cols(i = 0, obj_value = obj_value)
+    dplyr::bind_cols("i" = 0, "obj_value" = obj_value)
 
   for (i in 1:m) {
     update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
@@ -72,23 +73,31 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
       update_params_bool[sample(1:n_params, 1)] <- TRUE
     }
 
-    params_df <- params_df %>%
-      dplyr::mutate(new_val = best + rnorm(n_params, mean = 0, sd = sigma),
-                    new_val = case_when(
-                      new_val < min - (max - min) ~ min, #reflection
-                      new_val > max + (max - min) ~ max, #reflection
-                      new_val < min ~ min + (min - new_val),
-                      new_val > max ~ max - (new_val - max),
-                      TRUE ~ new_val
-                    )) %>%
-      mutate(values = if_else(update_params_bool, new_val, values))
+
+    params_df$new_val <- params_df$best + params_df$sigma * rnorm(n_params, mean = 0, sd = 1)
+    params_df$new_val <- with(params_df, ifelse(new_val < min - (max - min), min, new_val))
+    params_df$new_val <- with(params_df, ifelse(new_val > max + (max - min), max, new_val))
+    params_df$new_val <- with(params_df, ifelse(new_val < min, min + (min - new_val), new_val))
+    params_df$new_val <- with(params_df, ifelse(new_val > max, max - (new_val - max), new_val))
+    params_df$values <- with(params_df, ifelse(update_params_bool, new_val, values))
+
+    # params_df <- params_df %>%
+    #   dplyr::mutate(new_val = best + rnorm(n_params, mean = 0, sd = sigma),
+    #                 new_val = dplyr::case_when(
+    #                   new_val < min - (max - min) ~ min, #reflection
+    #                   new_val > max + (max - min) ~ max, #reflection
+    #                   new_val < min ~ min + (min - new_val),
+    #                   new_val > max ~ max - (new_val - max),
+    #                   TRUE ~ new_val
+    #                 )) %>%
+    #   dplyr::mutate(values = if_else(update_params_bool, new_val, values))
 
     # re-calculate objective function
     obj_value <- objective_function(params_df)
 
     new_outcome <- params_df %>% dplyr::select(c("param_names", "values")) %>%
       tidyr::pivot_wider(names_from = "param_names", values_from = "values") %>%
-      dplyr::bind_cols(i = i, obj_value = obj_value, new_best = obj_value < obj_best)
+      dplyr::bind_cols("i" = i, "obj_value" = obj_value, "new_best" = obj_value < obj_best)
 
     if (obj_value < obj_best) {
       params_df$best <- params_df$values
