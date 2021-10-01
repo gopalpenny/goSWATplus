@@ -73,24 +73,15 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
       update_params_bool[sample(1:n_params, 1)] <- TRUE
     }
 
-
     params_df$new_val <- params_df$best + params_df$sigma * rnorm(n_params, mean = 0, sd = 1)
+    # set to extreme if there is a double reflection
     params_df$new_val <- with(params_df, ifelse(new_val < min - (max - min), min, new_val))
     params_df$new_val <- with(params_df, ifelse(new_val > max + (max - min), max, new_val))
+    # mirror if single reflection
     params_df$new_val <- with(params_df, ifelse(new_val < min, min + (min - new_val), new_val))
     params_df$new_val <- with(params_df, ifelse(new_val > max, max - (new_val - max), new_val))
+    # update values
     params_df$values <- with(params_df, ifelse(update_params_bool, new_val, values))
-
-    # params_df <- params_df %>%
-    #   dplyr::mutate(new_val = best + rnorm(n_params, mean = 0, sd = sigma),
-    #                 new_val = dplyr::case_when(
-    #                   new_val < min - (max - min) ~ min, #reflection
-    #                   new_val > max + (max - min) ~ max, #reflection
-    #                   new_val < min ~ min + (min - new_val),
-    #                   new_val > max ~ max - (new_val - max),
-    #                   TRUE ~ new_val
-    #                 )) %>%
-    #   dplyr::mutate(values = if_else(update_params_bool, new_val, values))
 
     # re-calculate objective function
     obj_value <- objective_function(params_df)
