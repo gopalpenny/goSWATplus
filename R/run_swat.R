@@ -8,7 +8,26 @@
 #' @param scenario_path Path containing TxtInOut directory with SWAT executable
 #' @details Runs the first executable file in \code{scenario_path}
 #' @export
-run_swat <- function(scenario_path) {
+run_swat <- function(scenario_path, params_df = NULL) {
+
+  if(!is.null(params_df)) {
+    for (i in 1:nrow(params_df)) {
+      if (i == 1) {
+        calibration_df <-
+          add_cal_parm(param = params_df$param_name[i],
+                       change_type = params_df$change_type[i],
+                       val = params_df$values[i])
+      } else{
+        calibration_df <- calibration_df %>%
+          add_cal_parm(param = params_df$param_name[i],
+                       change_type = params_df$change_type[i],
+                       val = params_df$values[i])
+      }
+    }
+    write_calibration_cal(scenario_path, calibration_df)
+  }
+
+
   # print.prt - write to csv?
   # time.sim - start and end dates
   # scenario_path <- "/Documents and Settings/gopenny/Documents/SWAT models/gandak/gandak/Scenarios/calibrate/TxtInOut"
@@ -70,10 +89,18 @@ read_swat_data <- function(filename, path, vars = "all", swat_units = "all", dat
   }
   dt <- data.table::fread(file.path(path, filename), header = FALSE, skip = 3)
 
+  if (dim(dt)[2] != length(names)) {
+    dt_units <- as.character(read.table(file.path(path, filename), skip = 2, nrows = 1, header = FALSE))
+
+    # fix for SWAT+59.3
+    dt_additional_names <- dt_units[1:(dim(dt)[2] - length(dt_names))]
+    dt_names <- c(dt_additional_names,dt_names)
+  }
   names(dt) <- dt_names
   dt[,`:=`(gis_id = NULL,
            name = NULL,
-           date = as.Date(paste(yr, mon, day, sep = "-")))]
+           datestr = paste(yr, mon, day, sep = "-"))]
+  dt[,`:=`(date = as.Date(datestr, format = "%Y-%m-%d"))]
 
 
   dt_select <- dt
@@ -90,6 +117,11 @@ read_swat_data <- function(filename, path, vars = "all", swat_units = "all", dat
 
   return(dt_select[])
 }
+
+#' Run SWAT NSE
+#'
+#'
+
 
 # # swat_lsu_shp_path <- "C:/Users/gopenny/Documents/SWAT models/gandak/gandak/Watershed/Shapes/lsus1.shp"
 # # lsu_wb_mon_path <- file.path(swat_txtinout_path,"lsunit_wb_mon.txt")

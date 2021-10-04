@@ -2,6 +2,7 @@
 
 export("%>%")
 export(add_cal_parm)
+export(calibrate_DDS)
 export(get_NSE)
 export(read_swat_data)
 export(run_swat)
