@@ -32,7 +32,8 @@ get_NSE <- function(x_obs, x_sim) {
 #' @param r Variables are updated with a normal distribution and sd = r * N(1,0)
 #' @param m Number of iterations over which to calibrate
 #' @param best_only Boolean, indicates whether to filter output (see Return)
-#' @param print_progress Either \code{"none"}, \code{"bar"} for txtProgressBar, or \code{"iter"} to print iteration
+#' @param print_progress Either \code{"none"}, \code{"bar"} for txtProgressBar,
+#'  \code{"iter"} to print iteration, or \code{"iter_dt"} to include datetime
 #' @param save_path If used, path to directory to save output as "calibrate_dds_outcomes.csv"
 #' @export
 #' @details
@@ -97,6 +98,8 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     pb = utils::txtProgressBar(min = 0, max = m, initial = 0)
   } else if (print_progress == "iter") {
     cat("iteration: 0\n\n")
+  } else if (print_progress == "iter_dt") {
+    cat("iteration: 0 --",date(),"\n\n")
   }
   obj_value <- objective_function(params_df, ...)
   params_df$best <- params_df$values
@@ -111,6 +114,8 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
       utils::setTxtProgressBar(pb, value = i)
     } else if (print_progress == "iter") {
       cat("iteration:",i,"\n\n")
+    } else if (print_progress == "iter_dt") {
+      cat("iteration:",i,"--",date(),"\n\n")
     }
 
     update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update

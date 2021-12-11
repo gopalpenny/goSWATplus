@@ -28,7 +28,8 @@ calibrate_DDS(
 
 \item{best_only}{Boolean, indicates whether to filter output (see Return)}
 
-\item{print_progress}{Either \code{"none"}, \code{"bar"} for txtProgressBar, or \code{"iter"} to print iteration}
+\item{print_progress}{Either \code{"none"}, \code{"bar"} for txtProgressBar,
+\code{"iter"} to print iteration, or \code{"iter_dt"} to include datetime}
 
 \item{save_path}{If used, path to directory to save output as "calibrate_dds_outcomes.csv"}
 }
