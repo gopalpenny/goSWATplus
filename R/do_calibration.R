@@ -33,6 +33,7 @@ get_NSE <- function(x_obs, x_sim) {
 #' @param m Number of iterations over which to calibrate
 #' @param best_only Boolean, indicates whether to filter output (see Return)
 #' @param print_progress Either \code{"none"}, \code{"bar"} for txtProgressBar, or \code{"iter"} to print iteration
+#' @param save_path If used, path to directory to save output as "calibrate_dds_outcomes.csv"
 #' @export
 #' @details
 #' This function executes the Dynamically dimensioned search algorithm
@@ -81,7 +82,8 @@ get_NSE <- function(x_obs, x_sim) {
 #' set.seed(100)
 #' dds_output <- calibrate_DDS(params_df, example_objective_function, vals = 1:4, m = 100)
 #' View(dds_output)
-calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE, print_progress = "none") {
+calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE,
+                          print_progress = "none", save_path = NULL) {
 
   calibration_params_idx_bool <- params_df$max > params_df$min
   calibration_params_idx <- which(calibration_params_idx_bool)
@@ -149,6 +151,10 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     }
 
     dds_outcomes <- dds_outcomes %>% dplyr::bind_rows(new_outcome)
+
+    if(!is.null(save_path)) {
+      write.csv(dds_outcomes, file.path(save_path, "calibrate_DDS_outcomes.csv"))
+    }
   }
 
   if(best_only) {

@@ -11,7 +11,8 @@ calibrate_DDS(
   r = 0.2,
   m = 10,
   best_only = TRUE,
-  print_progress = "none"
+  print_progress = "none",
+  save_path = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ calibrate_DDS(
 \item{best_only}{Boolean, indicates whether to filter output (see Return)}
 
 \item{print_progress}{Either \code{"none"}, \code{"bar"} for txtProgressBar, or \code{"iter"} to print iteration}
+
+\item{save_path}{If used, path to directory to save output as "calibrate_dds_outcomes.csv"}
 }
 \value{
 Returns a \code{tibble} with parameter values for each calibration step. If
