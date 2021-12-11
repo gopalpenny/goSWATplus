@@ -1,0 +1,107 @@
+---
+title: "goSWATplus-calibration"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{goSWATplus-calibration}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(goSWATplus)
+```
+
+
+```{r}
+library(tidyverse)
+
+gandak_swat_path <- "/Documents and Settings/gopenny/Documents/SWAT models/gandak/gandak"
+scenario_path <- file.path(gandak_swat_path, "Scenarios/calibratedevghat/TxtInOut")
+
+
+
+
+# run_swat(scenario_path)
+# flo_out_cumec <- read_swat_data(filename = "channel_sd_day",
+#                                 vars = "flo_out",
+#                                 path = scenario_path,swat_units = 87)
+```
+
+
+```{r}
+g_data_path <- "C:/Users/gopenny/Documents/GitHub/swat_gandak"
+obs_flow <- readxl::read_excel(
+  file.path(g_data_path,"data/orig/nishan_hydrology/Discharge_450.xlsx"), skip = 3) %>%
+  mutate(date = as.Date(Date)) %>% 
+  dplyr::select(date, Q_cumec_obs = `Discharge (m3/s)`)
+
+run_swat_NSE_streamflow <- function(scenario_path, params_df = NULL, obs_flow) {
+  # params_df must contain $change_type
+  run_swat(scenario_path, params_df = params_df)
+  
+  flo_out <- read_swat_data(filename = "channel_sd_day", 
+                            path = scenario_path, swat_units = 87,
+                            vars = "flo_out")
+  
+  par_set <- tibble("cn2.hru|change = pctchg" = c(0, -40),
+                    "perco.hru|change = absval" = c(0.5, 1))
+  flo_out_spr <- SWATplusR::run_swatplus(
+    project_path = scenario_path,
+    parameter = par_set,
+    output_interval = "d",
+    output = list(flo_out = SWATplusR::define_output("channel_sd",
+                                                     variable = "flo_out",
+                                                     unit=87)),
+    start_date = "2000-01-01",
+    end_date = "2002-12-31")
+  
+  flo_compare <- inner_join(flo_out, obs_flow, by = "date")
+  
+  flo_NSE <- get_NSE(flo_compare$Q_cumec_obs, flo_compare$flo_out)
+  
+  return(1 - flo_NSE)
+}
+
+params_df <- tribble(~param_name, ~values, ~change_type,
+                     "perco", 1, "absval",
+                     "cn2", -20, "pctchg")
+run_swat_NSE_streamflow(scenario_path, params_df = params_df)
+
+```
+
+```{r}
+par_set <- tibble("cn2.hru|change = pctchg" = c(-40,-40,-40),
+                  "esco.hru|change = pctchg" = c(-20,-0, -20),
+                  "epco.hru|change = pctchg" = c(-20,-20, 0),
+                  "perco.hru|change = absval" = c(1, 1, 1))
+flo_out_spr <- SWATplusR::run_swatplus(
+  project_path = scenario_path,
+  parameter = par_set,
+  output_interval = "d",
+  n_thread = 4,
+  output = list(flo_out = SWATplusR::define_output("channel_sd",
+                                                   variable = "flo_out",
+                                                   unit=87),
+                precip_mm = SWATplusR::define_output("lsunit_wb",
+                                                   variable = c("precip"),
+                                                   unit=87),
+                precip_mm = SWATplusR::define_output("lsunit_wb",
+                                                   variable = c("et"),
+                                                   unit=87)),
+  start_date = "2000-01-01",
+  end_date = "2002-12-31")
+
+ggplot(flo_out_spr$simulation$flo_out %>% 
+        pivot_longer(starts_with("run_"), names_to = "run")) +
+  geom_line(data = obs_flow %>% filter(date %in% flo_out_spr$simulation$flo_out$date), 
+            aes(date, Q_cumec_obs), color = "black") +
+  geom_line(aes(date, value, color = run))
+```
+

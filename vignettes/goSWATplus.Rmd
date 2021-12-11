@@ -1,0 +1,54 @@
+---
+title: "goSWATplus"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{goSWATplus}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(goSWATplus)
+```
+
+# Initial SWAT+ Simulation
+
+First, you can download a light demo project from the `SWATplusR` package. Per the introduction to `SWATplusR`,
+run the following code to download the demo. See https://chrisschuerz.github.io/SWATplusR/articles/SWATplusR.html 
+for additional detail.
+
+## Download demo data
+
+```{r}
+# The path where the SWAT demo project will be written
+demo_path <- "C:/Users/gopenny/Documents/SWAT models/SWATplusR_demos"
+demo_path <- "Define:/your/path"
+
+# Loading a SWAT+ demo project
+path_plus <- SWATplusR::load_demo(dataset = "project",
+                                  version = "plus",
+                                  path = demo_path,
+                                  revision = 57)
+```
+
+## Run demo simulation
+
+The demo can be run exclusively using `SWATplusR` package, with the `run_swatplus` command which prepares the simulation, generates calibration files, runs SWAT in a temporary folder, and read the results to R. Alternatively, the `goSWATplus` package allows you to separate different aspects of the simulation and run the swatplus executable directly in the existing folder. To run the demo using `goSWATplus`, execute the following code:
+
+```{r}
+demo_path_57 <- "C:/Users/gopenny/Documents/SWAT models/SWATplusR_demos/swatplus_rev57_demo"
+run_swat(demo_path_57)
+```
+
+The function above, `run_swat`, identifies executable files in the specified path and simply
+runs the first one from the command line. Because the application is run in place,
+files within the directory are directly modified and written to.
+
+
