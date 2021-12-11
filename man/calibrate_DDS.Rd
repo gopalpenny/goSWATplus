@@ -68,15 +68,17 @@ algorithm for computationally efficient watershed model calibration. Water
 Resources Research, 43(1).
 }
 \examples{
-params_df <- tibble(param_names = c("x","y","z"),
-                    values = c(1.1, 1.2, 3.4),
-                    min = c(0.5, 1, 2.5), max = c(1.5, 3, 3.5))
+library(tibble)
+# note: calibrate x, y, z. parameter n is not calibrated as min == max
+params_df <- tibble(param_names = c("x","y","z","n"),
+                    values = c(1.1, 1.2, 3.4, 4.1),
+                    min = c(0.5, 1, 2.5, 4.1), max = c(1.5, 3, 3.5, 4.1))
 example_objective_function <- function(params_df, vals) {
   return(1 - get_NSE(params_df$values, vals))
 }
-example_objective_function(params_df, vals = 1:3)
+example_objective_function(params_df, vals = 1:4)
 
 set.seed(100)
-dds_output <- calibrate_DDS(params_df, example_objective_function, vals = 1:3, m = 100)
+dds_output <- calibrate_DDS(params_df, example_objective_function, vals = 1:4, m = 100)
 View(dds_output)
 }

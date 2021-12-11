@@ -68,25 +68,34 @@ get_NSE <- function(x_obs, x_sim) {
 #' \code{best_only} is \code{TRUE}, only rows where the calibration improved
 #' are returned.
 #' @examples
-#' params_df <- tibble(param_names = c("x","y","z"),
-#'                     values = c(1.1, 1.2, 3.4),
-#'                     min = c(0.5, 1, 2.5), max = c(1.5, 3, 3.5))
+#' library(tibble)
+#' # note: calibrate x, y, z. parameter n is not calibrated as min == max
+#' params_df <- tibble(param_names = c("x","y","z","n"),
+#'                     values = c(1.1, 1.2, 3.4, 4.1),
+#'                     min = c(0.5, 1, 2.5, 4.1), max = c(1.5, 3, 3.5, 4.1))
 #' example_objective_function <- function(params_df, vals) {
 #'   return(1 - get_NSE(params_df$values, vals))
 #' }
-#' example_objective_function(params_df, vals = 1:3)
+#' example_objective_function(params_df, vals = 1:4)
 #'
 #' set.seed(100)
-#' dds_output <- calibrate_DDS(params_df, example_objective_function, vals = 1:3, m = 100)
+#' dds_output <- calibrate_DDS(params_df, example_objective_function, vals = 1:4, m = 100)
 #' View(dds_output)
 calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE, print_progress = "none") {
 
-  calibration_params_idx <- which(params_df$max > params_df$min)
-  n_params <- length(calibration_params_idx)
+  calibration_params_idx_bool <- params_df$max > params_df$min
+  calibration_params_idx <- which(calibration_params_idx_bool)
+  n_calibrate <- length(calibration_params_idx)
+  n_params <- nrow(params_df)
   params_df$sigma <- (params_df$max - params_df$min) * r
 
   # start with initial run
   # params_df$values <- params_df$initial
+  if (print_progress == "bar") {
+    pb = utils::txtProgressBar(min = 0, max = m, initial = 0)
+  } else if (print_progress == "iter") {
+    cat("iteration: 0\n\n")
+  }
   obj_value <- objective_function(params_df, ...)
   params_df$best <- params_df$values
   obj_best <- obj_value
@@ -97,16 +106,13 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
 
   for (i in 1:m) {
     if (print_progress == "bar") {
-      if (i == 1) {
-        pb = utils::txtProgressBar(min = 1, max = m, initial = i)
-      } else {
-        utils::setTxtProgressBar(pb, value = i)
-      }
+      utils::setTxtProgressBar(pb, value = i)
     } else if (print_progress == "iter") {
       cat("iteration:",i,"\n\n")
     }
 
     update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
+    update_params_bool[!calibration_params_idx_bool] <- FALSE
     if (!any(update_params_bool)) { # if none are set to update, select one
       update_params_bool <- rep(FALSE, n_params)
       update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
