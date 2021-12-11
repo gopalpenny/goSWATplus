@@ -32,7 +32,7 @@ get_NSE <- function(x_obs, x_sim) {
 #' @param r Variables are updated with a normal distribution and sd = r * N(1,0)
 #' @param m Number of iterations over which to calibrate
 #' @param best_only Boolean, indicates whether to filter output (see Return)
-#' @param print_progress Either \code{"bar"} for txtProgressBar or \code{"iter"} to print iteration
+#' @param print_progress Either \code{"none"}, \code{"bar"} for txtProgressBar, or \code{"iter"} to print iteration
 #' @export
 #' @details
 #' This function executes the Dynamically dimensioned search algorithm
@@ -71,15 +71,15 @@ get_NSE <- function(x_obs, x_sim) {
 #' params_df <- tibble(param_names = c("x","y","z"),
 #'                     values = c(1.1, 1.2, 3.4),
 #'                     min = c(0.5, 1, 2.5), max = c(1.5, 3, 3.5))
-#' example_objective_function <- function(params_df, vals = 1:3) {
+#' example_objective_function <- function(params_df, vals) {
 #'   return(1 - get_NSE(params_df$values, vals))
 #' }
-#' example_objective_function(params_df)
+#' example_objective_function(params_df, vals = 1:3)
 #'
 #' set.seed(100)
-#' dds_output <- calibrate_DDS(params_df, example_objective_function, m = 100)
+#' dds_output <- calibrate_DDS(params_df, example_objective_function, vals = 1:3, m = 100)
 #' View(dds_output)
-calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE, print_progress = "bar") {
+calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE, print_progress = "none") {
 
   calibration_params_idx <- which(params_df$max > params_df$min)
   n_params <- length(calibration_params_idx)
@@ -87,7 +87,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
 
   # start with initial run
   # params_df$values <- params_df$initial
-  obj_value <- objective_function(params_df)
+  obj_value <- objective_function(params_df, ...)
   params_df$best <- params_df$values
   obj_best <- obj_value
 
@@ -108,7 +108,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
 
     update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
     if (!any(update_params_bool)) { # if none are set to update, select one
-      update_params_bool <- FALSE
+      update_params_bool <- rep(FALSE, n_params)
       update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
     }
 
@@ -121,6 +121,14 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     params_df$new_val <- with(params_df, ifelse(new_val > max, max - (new_val - max), new_val))
     # update values
     params_df$values <- with(params_df, ifelse(update_params_bool, new_val, values))
+
+    # for debugging
+    if(FALSE) {
+      print(i)
+      print(m)
+      print(params_df)
+      print(update_params_bool)
+    }
 
     # re-calculate objective function
     obj_value <- objective_function(params_df, ...)

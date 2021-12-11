@@ -11,7 +11,7 @@ calibrate_DDS(
   r = 0.2,
   m = 10,
   best_only = TRUE,
-  print_progress = "bar"
+  print_progress = "none"
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ calibrate_DDS(
 
 \item{best_only}{Boolean, indicates whether to filter output (see Return)}
 
-\item{print_progress}{Either \code{"bar"} for txtProgressBar or \code{"iter"} to print iteration}
+\item{print_progress}{Either \code{"none"}, \code{"bar"} for txtProgressBar, or \code{"iter"} to print iteration}
 }
 \value{
 Returns a \code{tibble} with parameter values for each calibration step. If
@@ -71,12 +71,12 @@ Resources Research, 43(1).
 params_df <- tibble(param_names = c("x","y","z"),
                     values = c(1.1, 1.2, 3.4),
                     min = c(0.5, 1, 2.5), max = c(1.5, 3, 3.5))
-example_objective_function <- function(params_df, vals = 1:3) {
+example_objective_function <- function(params_df, vals) {
   return(1 - get_NSE(params_df$values, vals))
 }
-example_objective_function(params_df)
+example_objective_function(params_df, vals = 1:3)
 
 set.seed(100)
-dds_output <- calibrate_DDS(params_df, example_objective_function, m = 100)
+dds_output <- calibrate_DDS(params_df, example_objective_function, vals = 1:3, m = 100)
 View(dds_output)
 }
