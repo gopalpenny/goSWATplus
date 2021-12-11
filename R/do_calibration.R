@@ -123,7 +123,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     params_df$values <- with(params_df, ifelse(update_params_bool, new_val, values))
 
     # re-calculate objective function
-    obj_value <- objective_function(params_df)
+    obj_value <- objective_function(params_df, ...)
 
     new_outcome <- params_df %>% dplyr::select(c("param_names", "values")) %>%
       tidyr::pivot_wider(names_from = "param_names", values_from = "values") %>%
