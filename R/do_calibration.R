@@ -50,8 +50,14 @@ get_NSE <- function(x_obs, x_sim) {
 #' \item \code{values}: Initial values for calibration
 #' }
 #' The \code{objective_function} should take as inputs a data.frame containing
-#' columns for \code{param_names} and \code{values}. Additional arguments will
-#' be passed through \code{...}.
+#' columns for \code{param_names}, which identify the parameters and
+#' \code{values}, which contain the updated values. Additional arguments will
+#' be passed through \code{...} and the \code{data.frame} will contain
+#' all of the original columns.
+#'
+#' Note that only parameters with \code{params_df$max > params_df$min} will be
+#' calibrated, meaning that it is possible to inclue parameters that will be
+#' skipped by the algorithm.
 #'
 #' Tolson, B.A. and Shoemaker, C.A., 2007. Dynamically dimensioned search
 #' algorithm for computationally efficient watershed model calibration. Water
@@ -74,7 +80,8 @@ get_NSE <- function(x_obs, x_sim) {
 #' View(dds_output)
 calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE) {
 
-  n_params <- nrow(params_df)
+  calibration_params_idx <- which(params_df$max > params_df$min)
+  n_params <- length(calibration_params_idx)
   params_df$sigma <- (params_df$max - params_df$min) * r
 
   # start with initial run
@@ -90,7 +97,8 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
   for (i in 1:m) {
     update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
     if (!any(update_params_bool)) { # if none are set to update, select one
-      update_params_bool[sample(1:n_params, 1)] <- TRUE
+      update_params_bool <- FALSE
+      update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
     }
 
     params_df$new_val <- params_df$best + params_df$sigma * rnorm(n_params, mean = 0, sd = 1)

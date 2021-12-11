@@ -4,7 +4,7 @@
 \alias{run_swat}
 \title{Run SWAT executable file}
 \usage{
-run_swat(scenario_path, calibration_params = NULL)
+run_swat(scenario_path, params_df = NULL)
 }
 \arguments{
 \item{scenario_path}{Path containing TxtInOut directory with SWAT executable}

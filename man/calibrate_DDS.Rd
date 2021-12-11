@@ -51,8 +51,14 @@ calibration algorithm. It contains columns:
 \item \code{values}: Initial values for calibration
 }
 The \code{objective_function} should take as inputs a data.frame containing
-columns for \code{param_names} and \code{values}. Additional arguments will
-be passed through \code{...}.
+columns for \code{param_names}, which identify the parameters and
+\code{values}, which contain the updated values. Additional arguments will
+be passed through \code{...} and the \code{data.frame} will contain
+all of the original columns.
+
+Note that only parameters with \code{params_df$max > params_df$min} will be
+calibrated, meaning that it is possible to inclue parameters that will be
+skipped by the algorithm.
 
 Tolson, B.A. and Shoemaker, C.A., 2007. Dynamically dimensioned search
 algorithm for computationally efficient watershed model calibration. Water
