@@ -10,7 +10,8 @@ calibrate_DDS(
   ...,
   r = 0.2,
   m = 10,
-  best_only = TRUE
+  best_only = TRUE,
+  print_progress = "bar"
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ calibrate_DDS(
 \item{m}{Number of iterations over which to calibrate}
 
 \item{best_only}{Boolean, indicates whether to filter output (see Return)}
+
+\item{print_progress}{Either \code{"bar"} for txtProgressBar or \code{"iter"} to print iteration}
 }
 \value{
 Returns a \code{tibble} with parameter values for each calibration step. If

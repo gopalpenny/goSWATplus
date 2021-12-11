@@ -32,6 +32,7 @@ get_NSE <- function(x_obs, x_sim) {
 #' @param r Variables are updated with a normal distribution and sd = r * N(1,0)
 #' @param m Number of iterations over which to calibrate
 #' @param best_only Boolean, indicates whether to filter output (see Return)
+#' @param print_progress Either \code{"bar"} for txtProgressBar or \code{"iter"} to print iteration
 #' @export
 #' @details
 #' This function executes the Dynamically dimensioned search algorithm
@@ -78,7 +79,7 @@ get_NSE <- function(x_obs, x_sim) {
 #' set.seed(100)
 #' dds_output <- calibrate_DDS(params_df, example_objective_function, m = 100)
 #' View(dds_output)
-calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE) {
+calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE, print_progress = "bar") {
 
   calibration_params_idx <- which(params_df$max > params_df$min)
   n_params <- length(calibration_params_idx)
@@ -95,6 +96,16 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     dplyr::bind_cols("i" = 0, "obj_value" = obj_value)
 
   for (i in 1:m) {
+    if (print_progress == "bar") {
+      if (i == 1) {
+        pb = utils::txtProgressBar(min = 1, max = m, initial = i)
+      } else {
+        utils::setTxtProgressBar(pb, value = i)
+      }
+    } else if (print_progress == "iter") {
+      cat("iteration:",i,"\n\n")
+    }
+
     update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
     if (!any(update_params_bool)) { # if none are set to update, select one
       update_params_bool <- FALSE
