@@ -86,30 +86,56 @@ get_NSE <- function(x_obs, x_sim) {
 calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE,
                           print_progress = "none", save_path = NULL) {
 
+  # if prev_run is true
+  prev_run <- FALSE
+  if (!is.null(save_path)) {
+    save_path_csv <- file.path(save_path, "calibrate_DDS_outcomes.csv")
+    if(file.exists(save_path_csv)) {
+      prev_run <- TRUE
+    }
+  }
+
   calibration_params_idx_bool <- params_df$max > params_df$min
   calibration_params_idx <- which(calibration_params_idx_bool)
   n_calibrate <- length(calibration_params_idx)
   n_params <- nrow(params_df)
   params_df$sigma <- (params_df$max - params_df$min) * r
 
-  # start with initial run
-  # params_df$values <- params_df$initial
-  if (print_progress == "bar") {
-    pb = utils::txtProgressBar(min = 0, max = m, initial = 0)
-  } else if (print_progress == "iter") {
-    cat("iteration: 0\n\n")
-  } else if (print_progress == "iter_dt") {
-    cat("iteration: 0 --",date(),"\n\n")
+  if (prev_run) {
+
+    stop("LOAD PREV RUN NOT WORKING. REMOVE CURRENT OUTPUT AND RERUN. SEE CODE COMMENTS")
+    # Right now this section of code needs to be fixed.
+    dds_outcomes <- readr::read_csv(save_path_csv)
+    start_i <- nrow(dds_outcomes) # note: first row is i=0, so nrow() is i + 1
+    best_rows <- dds_outcomes %>%
+      dplyr::filter(dds_outcomes$best)
+    current_values <- best_rows[nrow(best_rows),] %>%
+      tidyr::pivot_longer(dplyr::everything())
+
+
+  } else {
+    # start with initial run
+    # params_df$values <- params_df$initial
+    if (print_progress == "bar") {
+      pb = utils::txtProgressBar(min = 0, max = m, initial = 0)
+    } else if (print_progress == "iter") {
+      cat("iteration: 0\n\n")
+    } else if (print_progress == "iter_dt") {
+      cat("iteration: 0 --",date(),"\n\n")
+    }
+    obj_value <- objective_function(params_df, ...)
+    params_df$best <- params_df$values
+    obj_best <- obj_value
+
+    dds_outcomes <- params_df %>% dplyr::select(c("param_names", "values")) %>%
+      tidyr::pivot_wider(names_from = "param_names", values_from = "values") %>%
+      dplyr::bind_cols("i" = 0, "obj_value" = obj_value)
+
+    start_i <- 1
   }
-  obj_value <- objective_function(params_df, ...)
-  params_df$best <- params_df$values
-  obj_best <- obj_value
 
-  dds_outcomes <- params_df %>% dplyr::select(c("param_names", "values")) %>%
-    tidyr::pivot_wider(names_from = "param_names", values_from = "values") %>%
-    dplyr::bind_cols("i" = 0, "obj_value" = obj_value)
 
-  for (i in 1:m) {
+  for (i in start_i:m) {
     if (print_progress == "bar") {
       utils::setTxtProgressBar(pb, value = i)
     } else if (print_progress == "iter") {
@@ -133,7 +159,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     params_df$new_val <- with(params_df, ifelse(new_val < min, min + (min - new_val), new_val))
     params_df$new_val <- with(params_df, ifelse(new_val > max, max - (new_val - max), new_val))
     # update values
-    params_df$values <- with(params_df, ifelse(update_params_bool, new_val, values))
+    params_df$values <- with(params_df, ifelse(update_params_bool, new_val, best))
 
     # for debugging
     if(FALSE) {
@@ -158,7 +184,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     dds_outcomes <- dds_outcomes %>% dplyr::bind_rows(new_outcome)
 
     if(!is.null(save_path)) {
-      write.csv(dds_outcomes, file.path(save_path, "calibrate_DDS_outcomes.csv"))
+      write.csv(dds_outcomes, save_path_csv, row.names = FALSE)
     }
   }
 
