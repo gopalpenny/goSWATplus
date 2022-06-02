@@ -89,7 +89,7 @@ read_swat_data <- function(filename, path, vars = "all", swat_units = "all", dat
   }
   dt <- data.table::fread(file.path(path, filename), header = FALSE, skip = 3)
 
-  if (dim(dt)[2] != length(names)) {
+  if (dim(dt)[2] != length(dt_names)) {
     dt_units <- as.character(read.table(file.path(path, filename), skip = 2, nrows = 1, header = FALSE))
 
     # fix for SWAT+59.3
