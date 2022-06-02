@@ -105,7 +105,7 @@ read_swat_data <- function(filename, path, vars = "all", swat_units = "all", dat
 
   dt_select <- dt
   if (vars[1] != 'all') {
-    dt_select <- dt_select[, ..vars_date]
+    dt_select <- dt_select[, .SD, .SDcols=vars_date]
   }
   if (swat_units[1] != 'all') {
     dt_select <- dt_select[unit %in% swat_units]
