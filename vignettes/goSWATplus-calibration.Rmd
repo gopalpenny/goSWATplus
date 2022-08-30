@@ -72,7 +72,7 @@ run_swat_NSE_streamflow <- function(scenario_path, params_df = NULL, obs_flow) {
 params_df <- tribble(~param_name, ~values, ~change_type,
                      "perco", 1, "absval",
                      "cn2", -20, "pctchg")
-run_swat_NSE_streamflow(scenario_path, params_df = params_df)
+nse1 <- run_swat_NSE_streamflow(scenario_path, params_df = params_df, obs_flow = obs_flow)
 
 ```
 
