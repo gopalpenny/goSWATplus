@@ -151,16 +151,12 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
       cat("iteration:",i,"--",date(),"\n\n")
     }
 
-    if (i == 1){
-      # don't update any parameters on initial run
+
+    update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
+    update_params_bool[!calibration_params_idx_bool] <- FALSE
+    if (!any(update_params_bool)) { # if none are set to update, select one
       update_params_bool <- rep(FALSE, n_params)
-    } else {
-      update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
-      update_params_bool[!calibration_params_idx_bool] <- FALSE
-      if (!any(update_params_bool)) { # if none are set to update, select one
-        update_params_bool <- rep(FALSE, n_params)
-        update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
-      }
+      update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
     }
 
     params_df$new_val <- params_df$best + params_df$sigma * rnorm(n_params, mean = 0, sd = 1)
