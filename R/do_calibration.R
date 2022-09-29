@@ -130,7 +130,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     } else if (print_progress == "iter_dt") {
       cat("iteration: 0 --",date(),"\n\n")
     }
-    obj_value <- objective_function(params_df, ...)
+    obj_value <- objective_function(params_df, ..., iter = 0)
     params_df$best <- params_df$values
     obj_best <- obj_value
 
