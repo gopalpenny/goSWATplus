@@ -35,6 +35,7 @@ get_NSE <- function(x_obs, x_sim) {
 #' @param print_progress Either \code{"none"}, \code{"bar"} for txtProgressBar,
 #'  \code{"iter"} to print iteration, or \code{"iter_dt"} to include datetime
 #' @param save_path If used, path to directory to save output as "calibrate_dds_outcomes.csv"
+#' @param debug print calibrate_df each simulation if TRUE.
 #' @export
 #' @details
 #' This function executes the Dynamically dimensioned search algorithm
@@ -181,7 +182,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     }
 
     # re-calculate objective function
-    obj_value <- objective_function(params_df, ...)
+    obj_value <- objective_function(params_df, ..., iter = i)
 
     new_outcome <- params_df %>% dplyr::select(c("param_names", "values")) %>%
       tidyr::pivot_wider(names_from = "param_names", values_from = "values") %>%
@@ -197,6 +198,8 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     if(!is.null(save_path)) {
       write.csv(dds_outcomes, save_path_csv, row.names = FALSE)
     }
+
+    # function_after_each_sim()
   }
 
   if(best_only) {
