@@ -198,7 +198,6 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
       write.csv(dds_outcomes, save_path_csv, row.names = FALSE)
     }
   }
-}
 
   if(best_only) {
     dds_outcomes <- dds_outcomes %>% dplyr::filter(new_best)
