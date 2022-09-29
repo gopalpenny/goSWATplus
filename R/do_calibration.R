@@ -62,6 +62,12 @@ get_NSE <- function(x_obs, x_sim) {
 #' calibrated, meaning that it is possible to inclue parameters that will be
 #' skipped by the algorithm.
 #'
+#' `save_path_csv` is used to save the results of the calibration, including
+#' the iteration number, parameters, and objective function value. If `save_path_csv`
+#' is specified, the simulation will check for prior simulations when
+#' the function is called, and will re-start where it left off if
+#' earlier simulations exist.
+#'
 #' Tolson, B.A. and Shoemaker, C.A., 2007. Dynamically dimensioned search
 #' algorithm for computationally efficient watershed model calibration. Water
 #' Resources Research, 43(1).
@@ -84,7 +90,7 @@ get_NSE <- function(x_obs, x_sim) {
 #' dds_output <- calibrate_DDS(params_df, example_objective_function, vals = 1:4, m = 100)
 #' View(dds_output)
 calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, best_only = TRUE,
-                          print_progress = "none", save_path = NULL) {
+                          print_progress = "none", save_path = NULL, debug = FALSE) {
 
   # if prev_run is true
   prev_run <- FALSE
@@ -144,11 +150,16 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
       cat("iteration:",i,"--",date(),"\n\n")
     }
 
-    update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
-    update_params_bool[!calibration_params_idx_bool] <- FALSE
-    if (!any(update_params_bool)) { # if none are set to update, select one
+    if (i == 1){
+      # don't update any parameters on initial run
       update_params_bool <- rep(FALSE, n_params)
-      update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
+    } else {
+      update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
+      update_params_bool[!calibration_params_idx_bool] <- FALSE
+      if (!any(update_params_bool)) { # if none are set to update, select one
+        update_params_bool <- rep(FALSE, n_params)
+        update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
+      }
     }
 
     params_df$new_val <- params_df$best + params_df$sigma * rnorm(n_params, mean = 0, sd = 1)
@@ -162,7 +173,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     params_df$values <- with(params_df, ifelse(update_params_bool, new_val, best))
 
     # for debugging
-    if(FALSE) {
+    if(debug) {
       print(i)
       print(m)
       print(params_df)
@@ -186,6 +197,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     if(!is.null(save_path)) {
       write.csv(dds_outcomes, save_path_csv, row.names = FALSE)
     }
+  }
   }
 
   if(best_only) {
