@@ -110,15 +110,19 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
 
   if (prev_run) {
 
-    stop("LOAD PREV RUN NOT WORKING. REMOVE CURRENT OUTPUT AND RERUN. SEE CODE COMMENTS")
+    # stop("LOAD PREV RUN NOT WORKING. REMOVE CURRENT OUTPUT AND RERUN. SEE CODE COMMENTS")
     # Right now this section of code needs to be fixed.
     dds_outcomes <- readr::read_csv(save_path_csv)
     start_i <- nrow(dds_outcomes) # note: first row is i=0, so nrow() is i + 1
     best_rows <- dds_outcomes %>%
-      dplyr::filter(dds_outcomes$best)
-    current_values <- best_rows[nrow(best_rows),] %>%
-      tidyr::pivot_longer(dplyr::everything())
+      dplyr::filter(dds_outcomes$new_best)
+    current_values <- best_rows[nrow(best_rows),
+                                -which(names(best_rows) %in% c("i","obj_value","new_best"))] %>%
+      tidyr::pivot_longer(dplyr::everything(), names_to = "param_names", values_to = "best")
 
+    params_df <- params_df %>% dplyr::left_join(current_values, by = "param_names") %>%
+      dplyr::mutate(val = best)
+    obj_best <- best_rows$obj_value[nrow(best_rows)]
 
   } else {
     # start with initial run
@@ -136,7 +140,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
 
     dds_outcomes <- params_df %>% dplyr::select(c("param_names", "val")) %>%
       tidyr::pivot_wider(names_from = "param_names", values_from = "val") %>%
-      dplyr::bind_cols("i" = 0, "obj_value" = obj_value)
+      dplyr::bind_cols("i" = 0, "obj_value" = obj_value, new_best = TRUE)
 
     start_i <- 1
   }
