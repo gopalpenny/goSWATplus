@@ -33,6 +33,7 @@ run_swat <- function(scenario_path, params_df = NULL) {
   # scenario_path <- "/Documents and Settings/gopenny/Documents/SWAT models/gandak/gandak/Scenarios/calibrate/TxtInOut"
   current_wd <- getwd()
   setwd(scenario_path)
+  on.exit(setwd(current_wd))
   swat_exe <- list.files(scenario_path, pattern = "\\.exe")
   if (length(swat_exe) == 0) {
     stop("No executable files found in the SWAT scenario_path")
@@ -43,7 +44,6 @@ run_swat <- function(scenario_path, params_df = NULL) {
   cat("Running", swat_exe[1], "in", scenario_path,"...")
   system(swat_exe[1])
   cat("Done.\n")
-  setwd(current_wd)
 }
 
 #' Read SWAT+ output data

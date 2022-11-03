@@ -51,11 +51,11 @@ get_NSE <- function(x_obs, x_sim) {
 #' \item \code{param_name}
 #' \item \code{min}
 #' \item \code{max}
-#' \item \code{values}: Initial values for calibration
+#' \item \code{val}: Initial values for calibration
 #' }
 #' The \code{objective_function} should take as inputs a data.frame containing
 #' columns for \code{param_names}, which identify the parameters and
-#' \code{values}, which contain the updated values. Additional arguments will
+#' \code{val}, which contain the updated values. Additional arguments will
 #' be passed through \code{...} and the \code{data.frame} will contain
 #' all of the original columns.
 #'
@@ -73,17 +73,17 @@ get_NSE <- function(x_obs, x_sim) {
 #' algorithm for computationally efficient watershed model calibration. Water
 #' Resources Research, 43(1).
 #' @return
-#' Returns a \code{tibble} with parameter values for each calibration step. If
+#' Returns a \code{tibble} with parameter val for each calibration step. If
 #' \code{best_only} is \code{TRUE}, only rows where the calibration improved
 #' are returned.
 #' @examples
 #' library(tibble)
 #' # note: calibrate x, y, z. parameter n is not calibrated as min == max
 #' params_df <- tibble(param_names = c("x","y","z","n"),
-#'                     values = c(1.1, 1.2, 3.4, 4.1),
+#'                     val = c(1.1, 1.2, 3.4, 4.1),
 #'                     min = c(0.5, 1, 2.5, 4.1), max = c(1.5, 3, 3.5, 4.1))
 #' example_objective_function <- function(params_df, vals) {
-#'   return(1 - get_NSE(params_df$values, vals))
+#'   return(1 - get_NSE(params_df$val, vals))
 #' }
 #' example_objective_function(params_df, vals = 1:4)
 #'
@@ -110,19 +110,23 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
 
   if (prev_run) {
 
-    stop("LOAD PREV RUN NOT WORKING. REMOVE CURRENT OUTPUT AND RERUN. SEE CODE COMMENTS")
+    # stop("LOAD PREV RUN NOT WORKING. REMOVE CURRENT OUTPUT AND RERUN. SEE CODE COMMENTS")
     # Right now this section of code needs to be fixed.
     dds_outcomes <- readr::read_csv(save_path_csv)
     start_i <- nrow(dds_outcomes) # note: first row is i=0, so nrow() is i + 1
     best_rows <- dds_outcomes %>%
-      dplyr::filter(dds_outcomes$best)
-    current_values <- best_rows[nrow(best_rows),] %>%
-      tidyr::pivot_longer(dplyr::everything())
+      dplyr::filter(dds_outcomes$new_best)
+    current_values <- best_rows[nrow(best_rows),
+                                -which(names(best_rows) %in% c("i","obj_value","new_best"))] %>%
+      tidyr::pivot_longer(dplyr::everything(), names_to = "param_names", values_to = "best")
 
+    params_df <- params_df %>% dplyr::left_join(current_values, by = "param_names") %>%
+      dplyr::mutate(val = best)
+    obj_best <- best_rows$obj_value[nrow(best_rows)]
 
   } else {
     # start with initial run
-    # params_df$values <- params_df$initial
+    # params_df$val <- params_df$initial
     if (print_progress == "bar") {
       pb = utils::txtProgressBar(min = 0, max = m, initial = 0)
     } else if (print_progress == "iter") {
@@ -130,13 +134,13 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     } else if (print_progress == "iter_dt") {
       cat("iteration: 0 --",date(),"\n\n")
     }
-    obj_value <- objective_function(params_df, ...)
-    params_df$best <- params_df$values
+    obj_value <- objective_function(params_df, ..., iter = 0)
+    params_df$best <- params_df$val
     obj_best <- obj_value
 
-    dds_outcomes <- params_df %>% dplyr::select(c("param_names", "values")) %>%
-      tidyr::pivot_wider(names_from = "param_names", values_from = "values") %>%
-      dplyr::bind_cols("i" = 0, "obj_value" = obj_value)
+    dds_outcomes <- params_df %>% dplyr::select(c("param_names", "val")) %>%
+      tidyr::pivot_wider(names_from = "param_names", values_from = "val") %>%
+      dplyr::bind_cols("i" = 0, "obj_value" = obj_value, new_best = TRUE)
 
     start_i <- 1
   }
@@ -151,16 +155,12 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
       cat("iteration:",i,"--",date(),"\n\n")
     }
 
-    if (i == 1){
-      # don't update any parameters on initial run
+
+    update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
+    update_params_bool[!calibration_params_idx_bool] <- FALSE
+    if (!any(update_params_bool)) { # if none are set to update, select one
       update_params_bool <- rep(FALSE, n_params)
-    } else {
-      update_params_bool <- runif(n_params) > log(i) / log(m) # select which params to update
-      update_params_bool[!calibration_params_idx_bool] <- FALSE
-      if (!any(update_params_bool)) { # if none are set to update, select one
-        update_params_bool <- rep(FALSE, n_params)
-        update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
-      }
+      update_params_bool[sample(calibration_params_idx, 1)] <- TRUE
     }
 
     params_df$new_val <- params_df$best + params_df$sigma * rnorm(n_params, mean = 0, sd = 1)
@@ -171,7 +171,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     params_df$new_val <- with(params_df, ifelse(new_val < min, min + (min - new_val), new_val))
     params_df$new_val <- with(params_df, ifelse(new_val > max, max - (new_val - max), new_val))
     # update values
-    params_df$values <- with(params_df, ifelse(update_params_bool, new_val, best))
+    params_df$val <- with(params_df, ifelse(update_params_bool, new_val, best))
 
     # for debugging
     if(debug) {
@@ -185,12 +185,12 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     cat("obj_value <- objective_function(params_df, ..., iter = i)")
     obj_value <- objective_function(params_df, ..., iter = i)
 
-    new_outcome <- params_df %>% dplyr::select(c("param_names", "values")) %>%
-      tidyr::pivot_wider(names_from = "param_names", values_from = "values") %>%
+    new_outcome <- params_df %>% dplyr::select(c("param_names", "val")) %>%
+      tidyr::pivot_wider(names_from = "param_names", values_from = "val") %>%
       dplyr::bind_cols("i" = i, "obj_value" = obj_value, "new_best" = obj_value < obj_best)
 
     if (obj_value < obj_best) {
-      params_df$best <- params_df$values
+      params_df$best <- params_df$val
       obj_best <- obj_value
     }
 
