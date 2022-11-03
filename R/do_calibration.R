@@ -139,8 +139,11 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     obj_best <- obj_value
 
     dds_outcomes <- params_df %>% dplyr::select(c("param_names", "val")) %>%
+      dplyr::group_by(param_names) %>%
+      dplyr::mutate(param_names = gsub("1$","",paste0(param_names,dplyr::row_number()))) %>%
+      dplyr::ungroup() %>%
       tidyr::pivot_wider(names_from = "param_names", values_from = "val") %>%
-      dplyr::bind_cols("i" = 0, "obj_value" = obj_value, new_best = TRUE)
+      dplyr::bind_cols("i" = 0, "obj_value" = obj_value, "new_best" = TRUE)
 
     start_i <- 1
   }
