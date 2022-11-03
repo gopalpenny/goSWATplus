@@ -182,6 +182,7 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
     }
 
     # re-calculate objective function
+    cat("obj_value <- objective_function(params_df, ..., iter = i)")
     obj_value <- objective_function(params_df, ..., iter = i)
 
     new_outcome <- params_df %>% dplyr::select(c("param_names", "values")) %>%
