@@ -145,6 +145,10 @@ calibrate_DDS <- function(params_df, objective_function, ..., r = 0.2, m = 10, b
       tidyr::pivot_wider(names_from = "param_names", values_from = "val") %>%
       dplyr::bind_cols("i" = 0, "obj_value" = obj_value, "new_best" = TRUE)
 
+    if(!is.null(save_path)) {
+      write.csv(dds_outcomes, save_path_csv, row.names = FALSE)
+    }
+
     start_i <- 1
   }
 
